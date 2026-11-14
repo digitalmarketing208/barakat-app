@@ -1,25 +1,129 @@
 {
   "expo": {
-    "name": "barakat-app",
-    "slug": "barakat-app",
+    "name": "Barakat Optical",
+    "slug": "barakat-optical",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "scheme": [
+      "barakat",
+      "shop.62068883755.app"
+    ],
+    "locales": {
+      "ar": "./locales/ar.json",
+      "en": "./locales/en.json"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "sa.com.barakatoptical.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Virtual try-on uses the front camera, and you can photograph your prescription. / تستخدم الكاميرا لتجربة النظارة الافتراضية ولتصوير وصفتك الطبية",
+        "NSPhotoLibraryUsageDescription": "Choose a photo of your prescription to send to us. / اختر صورة وصفتك الطبية لإرسالها إلينا",
+        "NSLocationWhenInUseUsageDescription": "Your location is used to show your nearest branch. / يُستخدم موقعك لعرض أقرب فرع إليك"
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "sa.com.barakatoptical.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#DD1721",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "permissions": [
+        "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-updates",
+      "expo-image",
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": [
+              "ar",
+              "en"
+            ],
+            "android": [
+              "ar",
+              "en"
+            ]
+          }
+        }
+      ],
+      "expo-sharing",
+      "expo-web-browser",
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Virtual try-on uses the front camera, and you can photograph your prescription. / تستخدم الكاميرا لتجربة النظارة الافتراضية ولتصوير وصفتك الطبية",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a photo of your prescription to send to us. / اختر صورة وصفتك الطبية لإرسالها إلينا",
+          "cameraPermission": "Virtual try-on uses the front camera, and you can photograph your prescription. / تستخدم الكاميرا لتجربة النظارة الافتراضية ولتصوير وصفتك الطبية",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Your location is used to show your nearest branch. / يُستخدم موقعك لعرض أقرب فرع إليك",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isIosBackgroundLocationEnabled": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#DD1721"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#DD1721"
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Unlock your Barakat account with Face ID"
+        }
+      ]
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
     }
   }
 }

@@ -1,0 +1,12 @@
+{
+  "homeRails": [
+    "new-arrivals-all-collections",
+    "gamer-vision-blue-light-gaming-glasses",
+    "eyeglasses-all-brands",
+    "sunglasses-all-brands",
+    "kids-collections-all-eyeglasses-and-sunglasses",
+    "accessories-1"
+  ],
+  "shopCollections": ["eyeglasses-all-brands", "sunglasses-all-brands", "contact-lenses", "kids-collections-all-eyeglasses-and-sunglasses"],
+  "lensAddons": ["lens-addon-uv", "lens-addon-blue-cut", "lens-addon-gamers", "lens-addon-night-driving"]
+}

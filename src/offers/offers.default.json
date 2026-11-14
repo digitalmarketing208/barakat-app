@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-14T00:00:00+03:00",
+  "sample": true,
+  "offers": [
+    {
+      "id": "sample-autumn-sunglasses-1plus1",
+      "titleAr": "عرض الخريف: اشترِ نظارة شمسية واحصل على الثانية مجاناً (نموذج)",
+      "titleEn": "Autumn offer: buy 1 sunglasses get 1 free (SAMPLE)",
+      "startsAt": "2026-10-01T00:00:00+03:00",
+      "endsAt": "2026-11-22T23:59:59+03:00",
+      "scope": { "collections": ["sunglasses-all-brands"] },
+      "kind": "bogo",
+      "badgeAr": "١+١",
+      "badgeEn": "1+1",
+      "link": { "collection": "sunglasses-all-brands" }
+    },
+    {
+      "id": "sample-back-to-school-insurance-second-pair",
+      "titleAr": "عرض التأمين: الزوج الثاني بسعر خاص حتى نهاية العام (نموذج)",
+      "titleEn": "Insurance offer: special price on a second pair until year end (SAMPLE)",
+      "startsAt": "2026-09-01T00:00:00+03:00",
+      "endsAt": "2026-12-31T23:59:59+03:00",
+      "scope": { "all": true },
+      "kind": "strap",
+      "badgeAr": "الزوج الثاني",
+      "badgeEn": "2nd pair"
+    }
+  ]
+}

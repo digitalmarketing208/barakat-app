@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Barakat Optical"
+  },
+  "android": {
+    "app_name": "Barakat Optical"
+  }
+}
