@@ -316,16 +316,20 @@ export async function cartAddLines(cartId: string, lines: NewLine[]): Promise<Ca
   if (d.cartLinesAdd.userErrors.length) throw new Error(d.cartLinesAdd.userErrors[0].message);
   return shapeCart(d.cartLinesAdd.cart);
 }
+/** Message thrown when Shopify no longer has the cart (net/cartOps treats it as an empty cart). */
+export const CART_GONE = 'cart does not exist';
 export async function cartUpdate(cartId: string, lineId: string, quantity: number): Promise<Cart> {
-  const d = await gql<{ cartLinesUpdate: { cart: RawCart } }>(
+  const d = await gql<{ cartLinesUpdate: { cart: RawCart | null } }>(
     `mutation Upd($cartId: ID!, $lines: [CartLineUpdateInput!]!) { cartLinesUpdate(cartId: $cartId, lines: $lines) { cart { ${CART_FIELDS} } } }`,
     { cartId, lines: [{ id: lineId, quantity }] });
+  if (!d.cartLinesUpdate.cart) throw new Error(CART_GONE); // expired or already checked out
   return shapeCart(d.cartLinesUpdate.cart);
 }
 export async function cartRemove(cartId: string, lineId: string): Promise<Cart> {
-  const d = await gql<{ cartLinesRemove: { cart: RawCart } }>(
+  const d = await gql<{ cartLinesRemove: { cart: RawCart | null } }>(
     `mutation Rem($cartId: ID!, $lineIds: [ID!]!) { cartLinesRemove(cartId: $cartId, lineIds: $lineIds) { cart { ${CART_FIELDS} } } }`,
     { cartId, lineIds: [lineId] });
+  if (!d.cartLinesRemove.cart) throw new Error(CART_GONE);
   return shapeCart(d.cartLinesRemove.cart);
 }
 export async function cartGet(cartId: string): Promise<Cart | null> {

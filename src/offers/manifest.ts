@@ -26,13 +26,20 @@ export function parseBody(body: string): OffersManifest | null {
   try { return validateManifest(JSON.parse(bodyToJson(body))); } catch { return null; }
 }
 
+/** First run with nothing saved: the bundled manifest, but a manifest marked `sample` is never shown to customers. */
+function startManifest(): OffersManifest {
+  const d = defaultOffers();
+  const dev = typeof __DEV__ !== 'undefined' && __DEV__;
+  return d.sample && !dev ? { ...d, offers: [] } : d;
+}
+
 /** Synchronous start-up: restore clock + last good manifest from disk (else the bundled sample). Call once, early. */
 export function initOffers() {
   if (inited) return; inited = true;
   clock.restore(cacheRead<Partial<ReturnType<typeof clock.snapshot>>>(KEY_CLOCK));
   const s = cacheRead<Saved>(KEY_MANIFEST);
   const m = s ? validateManifest(s.manifest) : null;
-  if (s && m) { setManifest(m); fetchedAt = s.fetchedAt; source = 'cache'; } else { setManifest(defaultOffers()); }
+  if (s && m) { setManifest(m); fetchedAt = s.fetchedAt; source = 'cache'; } else { setManifest(startManifest()); }
   emit();
 }
 

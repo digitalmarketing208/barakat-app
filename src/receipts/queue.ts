@@ -3,6 +3,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ReceiptClaim, ReceiptError, claimReceipt, isRetryable } from './api';
 import { MAX_AGE_DAYS, receiptAgeDays } from './zatca';
+import { readCachedMe } from '../rewards/session';
 
 const KEY = 'receipts.pending.v1';
 const MAX_QUEUE = 20;
@@ -15,6 +16,8 @@ export interface PendingClaim {
   total: number;
   /** receipt time, ISO UTC; entries older than the API window are dropped */
   utc: string;
+  /** mobile of the member who scanned it; it is only ever sent for that member (shared phones) */
+  owner?: string;
 }
 
 export async function readQueue(): Promise<PendingClaim[]> {
@@ -61,14 +64,18 @@ async function run(): Promise<FlushResult> {
   const out: FlushResult = { sent: [], already: 0, dropped: [], left: 0, stopped: null };
   const keep: PendingClaim[] = [];
   const q = await readQueue();
+  const current = (await readCachedMe())?.member?.mobile ?? null;
+  let limit = false;
   for (let i = 0; i < q.length; i++) {
     const c = q[i];
-    if (out.stopped) { keep.push(c); continue; }
+    // Scanned by another member on this phone: wait for that member, never credit someone else.
+    if (out.stopped || limit || (c.owner && c.owner !== current)) { keep.push(c); continue; }
     if (receiptAgeDays(c.utc) > MAX_AGE_DAYS) { out.dropped.push({ qr: c.qr, code: 'receipt_too_old' }); continue; }
     try {
       out.sent.push((await claimReceipt({ qr: c.qr })).claim);
     } catch (e) {
       if (e instanceof ReceiptError && e.code === 'duplicate') out.already++;
+      else if (e instanceof ReceiptError && e.code === 'limit_reached') { keep.push(c); limit = true; } // daily limit: try again tomorrow
       else if (isRetryable(e)) {
         keep.push(c);
         if (e instanceof ReceiptError && (e.code === 'network' || e.code === 'unauthorized')) out.stopped = e.code;

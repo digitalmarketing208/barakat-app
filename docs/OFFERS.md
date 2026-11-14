@@ -44,4 +44,4 @@ Keep your Shopify prices in step: remove the sale price in Shopify when the offe
 - Offers not in the manifest are not managed (no covering offer = Shopify price shown as is).
 - `bogo` offers are display only; the discount itself must exist in Shopify.
 - The `Date` header has 1 s resolution; the manifest is cached up to the app cache TTL (30 days).
-- The bundled default is marked `"sample": true`; replace it via the Shopify page rather than rebuilding.
+- The bundled default is marked `"sample": true`; replace it via the Shopify page rather than rebuilding. A `sample` manifest is shown in development builds only: in a release build a fresh install with no internet shows no offers until the first sync.

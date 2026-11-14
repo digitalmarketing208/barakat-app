@@ -62,14 +62,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [publish, setServer]);
 
   // Send queued offline changes, oldest first. Stops at the first network failure and keeps the rest for next time.
-  const flush = useCallback(() => {
+  const retry = useRef<{ timer: ReturnType<typeof setTimeout> | null; n: number; go: () => void }>({ timer: null, n: 0, go: () => {} });
+  const flush = useCallback((): Promise<void> => {
     if (!ops.current.length || isOffline()) return Promise.resolve();
     return run(async () => {
       const r = await replay(api, server.current, ops.current, retryable, (left) => { ops.current = [...left]; saveOps(); });
       ops.current = r.left; saveOps();
       return r.cart;
-    }).catch(() => {});
+    }).catch(() => {}).then(() => {
+      // Still waiting although the phone reports a connection (weak signal, Shopify hiccup): no reconnect event will
+      // come, so try again shortly; otherwise the cart would stay "pending" and checkout blocked until the next app open.
+      const r = retry.current;
+      if (r.timer) { clearTimeout(r.timer); r.timer = null; }
+      if (!ops.current.length) { r.n = 0; return; }
+      if (isOffline()) return;
+      r.timer = setTimeout(() => { r.timer = null; r.go(); }, Math.min(30000, 4000 * 2 ** Math.min(r.n++, 3)));
+    });
   }, [run, saveOps]);
+  useEffect(() => { retry.current.go = () => { void flush(); }; }, [flush]);
 
   // Re-read the cart from Shopify (after reconnecting, or returning from checkout), then send anything queued.
   const refresh = useCallback(() => {
@@ -90,11 +100,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           AsyncStorage.getItem('wishlist'), AsyncStorage.getItem('recent'), AsyncStorage.getItem('cartId'),
           AsyncStorage.getItem('cartSnap'), AsyncStorage.getItem('cartOps'),
         ]);
-        if (w) setWishlist(JSON.parse(w));
-        if (r) setRecent(JSON.parse(r));
-        if (q) { const list = JSON.parse(q); if (Array.isArray(list)) ops.current = list; }
+        const strs = (raw: string | null): string[] => { try { const v: unknown = raw ? JSON.parse(raw) : []; return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []; } catch { return []; } };
+        if (w) setWishlist(strs(w));
+        if (r) setRecent(strs(r));
+        try {
+          const list: unknown = q ? JSON.parse(q) : [];
+          if (Array.isArray(list)) ops.current = list.filter((o): o is CartOp => !!o && ((o.t === 'add' && Array.isArray(o.lines)) || (o.t === 'qty' && !!o.ref)));
+        } catch { /* a damaged queue is dropped */ }
         // The saved copy makes the cart visible immediately and with no connection.
-        const saved = snap ? (JSON.parse(snap) as Cart) : null;
+        let saved: Cart | null = null;
+        try { const c = snap ? (JSON.parse(snap) as Cart) : null; if (c && Array.isArray(c.lines) && c.cost?.subtotalAmount && c.cost?.totalAmount) saved = c; } catch { /* damaged copy: reload from Shopify */ }
         if (id) server.current = saved && saved.id === id ? saved : { id, checkoutUrl: '', totalQuantity: 0, cost: { subtotalAmount: { amount: '0', currencyCode: 'SAR' }, totalAmount: { amount: '0', currencyCode: 'SAR' } }, lines: [] };
         publish();
       } catch { /* storage unavailable: start empty */ }
@@ -120,6 +135,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (!retryable(e)) throw e; // a real answer from Shopify (e.g. sold out): let the screen show it
       if (op.t === 'add') op.tried = true; // outcome unknown: replay checks the cart before re-sending
       enqueue();
+      if (!retry.current.timer) retry.current.timer = setTimeout(() => { retry.current.timer = null; retry.current.go(); }, 4000);
     }
   }, [run, flush, publish, saveOps]);
 

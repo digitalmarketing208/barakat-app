@@ -87,6 +87,8 @@ export function matchQty(cart: Cart | null, lines: NewLine[]): number {
   return cart.lines.filter((l) => l.merchandise.id === first.variantId && sameAttrs(l.attributes, first.attributes)).reduce((n, l) => n + l.quantity, 0);
 }
 
+const GONE = /does not exist|not found|invalid id/i;
+
 export type CartApi = {
   create: (lines: NewLine[]) => Promise<Cart>;
   add: (cartId: string, lines: NewLine[]) => Promise<Cart>;
@@ -101,7 +103,7 @@ export async function applyRemote(api: CartApi, op: CartOp, cur: Cart | null): P
     if (!cur) return api.create(op.lines);
     try { return await api.add(cur.id, op.lines); } catch (e) {
       // The saved cart expired or was checked out: start a new one with these lines.
-      if (e instanceof Error && /does not exist|not found|invalid id/i.test(e.message)) return api.create(op.lines);
+      if (e instanceof Error && GONE.test(e.message)) return api.create(op.lines);
       throw e;
     }
   }
@@ -109,9 +111,15 @@ export async function applyRemote(api: CartApi, op: CartOp, cur: Cart | null): P
   if (!cur || !line) return cur; // already gone
   if (isLens(line) && op.qty > 0) return cur;
   const partner = partnerOf(cur, line);
-  let c = op.qty <= 0 ? await api.remove(cur.id, line.id) : await api.update(cur.id, line.id, op.qty);
-  if (partner) c = op.qty <= 0 ? await api.remove(cur.id, partner.id) : await api.update(cur.id, partner.id, op.qty);
-  return c;
+  try {
+    let c = op.qty <= 0 ? await api.remove(cur.id, line.id) : await api.update(cur.id, line.id, op.qty);
+    if (partner) c = op.qty <= 0 ? await api.remove(cur.id, partner.id) : await api.update(cur.id, partner.id, op.qty);
+    return c;
+  } catch (e) {
+    // The saved cart expired or was checked out: nothing left to change.
+    if (e instanceof Error && GONE.test(e.message)) return null;
+    throw e;
+  }
 }
 
 /**

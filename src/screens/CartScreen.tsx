@@ -156,7 +156,7 @@ export default function CartScreen() {
 
   const { syncCart } = useAuth();
   const openCheckout = async () => {
-    if (!cart) return;
+    if (!cart || !cart.checkoutUrl) { setErr(true); return; }
     await syncCart(cart.id).catch(() => {});
     const url = checkoutWithCode(cart.checkoutUrl, promo);
     WebBrowser.openBrowserAsync(url, { toolbarColor: colors.maroon, controlsColor: colors.card })
@@ -165,6 +165,8 @@ export default function CartScreen() {
   const checkout = async () => {
     if (!cart || going) return;
     setErr(false); Keyboard.dismiss();
+    // Unsynced changes (or a cart Shopify has not confirmed yet) have no checkout link: never open a stale or empty one.
+    if (!cart.checkoutUrl || cartPending > 0) { setErr(true); return; }
     const text = note.trim();
     if (text !== syncedNote.current) {
       setGoing(true);
@@ -278,6 +280,7 @@ export default function CartScreen() {
         {kb === 0 && (
           <View onLayout={(e) => setBarH(e.nativeEvent.layout.height)} style={[c.bar, { paddingBottom: insets.bottom + 12 }, shadow]}>
             {err && <T style={{ color: colors.red, textAlign: 'center', marginBottom: 6 }}>{t('loadError')}</T>}
+            {!offline && cartPending > 0 && <T style={{ color: colors.muted, textAlign: 'center', fontSize: 12, marginBottom: 6 }}>{t('cartPending')}</T>}
             {offline && (
               <View style={{ marginBottom: 6, gap: 2 }}>
                 <T style={{ color: colors.muted, textAlign: 'center', fontSize: 12 }}>{pricesAsOf(offersMeta().fetchedAt, lang)}</T>

@@ -40,7 +40,8 @@ export function RedeemWallet({ client, member, cfg, offline, cachedAt, onChanged
   const { lang, row } = useI18n();
   const t = strings[lang];
   const api = React.useMemo(() => createRedeemApi(client), [client]);
-  const usable = member.points.usable;
+  // points already reserved by an open QR (maybe on another phone of the family) cannot be offered again
+  const usable = member.points.available ?? member.points.usable;
   const max = maxRedeemPoints(usable, cfg);
   const can = max > 0;
   const [points, setPoints] = useState(() => clampPoints(cfg.min_redeem, usable, cfg));
@@ -170,6 +171,8 @@ function QrSession({ api, hold, points, sar, tier, onClose }: { api: ReturnType<
       setToken(o.token); setTotal(secs); setLeft(secs); setLink(true);
     } catch (e) {
       if (e instanceof RewardsError && (e.code === 'hold_expired' || e.code === 'hold_not_found')) finish('expired');
+      else if (e instanceof RewardsError && e.code === 'hold_used') finish('used');
+      else if (e instanceof RewardsError && e.code === 'hold_cancelled') finish('cancelled');
       else if (e instanceof RewardsError && e.code === 'network') setLink(false);
     } finally { refreshing.current = false; }
   }, [api, hold.hold_id, finish]);
@@ -231,6 +234,7 @@ function QrSession({ api, hold, points, sar, tier, onClose }: { api: ReturnType<
     setCancelling(true); setErr('');
     try { await api.cancel(hold.hold_id); finish('cancelled'); } catch (e) {
       if (e instanceof RewardsError && (e.code === 'hold_not_found' || e.code === 'hold_expired')) finish('expired');
+      else if (e instanceof RewardsError && e.code === 'hold_used') finish('used'); // the till scanned it first: the points were spent
       else setErr(t.e_network);
     } finally { setCancelling(false); }
   };

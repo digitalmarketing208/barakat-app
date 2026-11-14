@@ -247,7 +247,11 @@ export function OrdersSection({ profile }: { profile: Profile }) {
     try { await addLines(lines); added = lines.length; }
     catch {
       // One sold-out item must not block the rest.
-      for (const l of lines) { try { await addLines([l]); added++; } catch { /* skip unavailable */ } }
+      // A frame and its lens add-on (same `_group`) go in together or not at all: never a lens without its frame.
+      const groupOf = (l: NewLine) => l.attributes?.find((a) => a.key === '_group')?.value;
+      const sets = new Map<string, NewLine[]>();
+      lines.forEach((l, i) => { const k = groupOf(l) ?? `#${i}`; sets.set(k, [...(sets.get(k) ?? []), l]); });
+      for (const set of sets.values()) { try { await addLines(set); added += set.length; } catch { /* skip unavailable */ } }
     }
     setBusy(null);
     if (added === 0) { setMsg({ id: o.id, text: s('reorderNone'), tone: 'bad' }); return; }

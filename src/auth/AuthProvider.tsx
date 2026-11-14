@@ -149,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         if (cached) { profileRef.current = cached; setProfile(cached); }
-        setLocked(enabled);
+        setLocked(bioPref === '1'); // not `enabled`: removing the fingerprints must not open the account (unlock() signs out instead)
         setStatus('signedIn');
         void reload().then((ok) => { if (ok) void syncCart(); });
       } catch {

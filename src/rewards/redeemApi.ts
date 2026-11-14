@@ -39,8 +39,9 @@ export function createRedeemApi(client: RewardsClient) {
         throw e;
       }
     },
-    token: (hold_id: string) => call<HoldToken>('/me/redeem-token', { hold_id }),
-    cancel: (hold_id: string) => call<{ ok: true }>('/me/redeem-cancel', { hold_id }),
+    // device_id on every call, so the server can enforce the device binding (setting redeem_device_strict)
+    token: async (hold_id: string) => call<HoldToken>('/me/redeem-token', { hold_id, device_id: await getDeviceId() }),
+    cancel: async (hold_id: string) => call<{ ok: true }>('/me/redeem-cancel', { hold_id, device_id: await getDeviceId() }),
     status: async (hold_id: string): Promise<HoldState> => {
       const o = await call<{ status?: unknown; expires_at?: string }>('/me/redeem-hold/' + encodeURIComponent(hold_id));
       if (!isHoldStatus(o.status)) throw new RewardsError('server');

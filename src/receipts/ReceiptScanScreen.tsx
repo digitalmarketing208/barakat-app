@@ -138,7 +138,7 @@ export default function ReceiptScanScreen({ apiBase = REWARDS_API }: { apiBase?:
     } catch (e) {
       const code: ReceiptErrorCode = e instanceof ReceiptError ? e.code : 'server';
       if (isRetryable(e)) {
-        setWaiting(await enqueue({ qr, seller: receipt.seller, total: receipt.total, utc: receipt.utc }));
+        setWaiting(await enqueue({ qr, seller: receipt.seller, total: receipt.total, utc: receipt.utc, owner: member?.mobile }));
         setRefusal(code);
         setPhase('queued');
       } else {

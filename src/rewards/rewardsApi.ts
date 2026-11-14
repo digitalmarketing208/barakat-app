@@ -9,7 +9,7 @@ export type ErrorCode =
   | 'duplicate' | 'min_points' | 'step_points' | 'insufficient_points' | 'cap_exceeded'
   | 'code_wrong' | 'code_expired' | 'code_locked' | 'too_many_codes' | 'not_allowed' | 'family_full'
   // wallet redeem (docs/MEMBERSHIP.md; the server may not ship these yet)
-  | 'hold_exists' | 'hold_expired' | 'hold_not_found' | 'device_mismatch'
+  | 'hold_exists' | 'hold_expired' | 'hold_not_found' | 'hold_used' | 'hold_cancelled' | 'device_mismatch'
   // client-side codes (not sent by the API)
   | 'network' | 'server' | 'config' | 'unsupported';
 
@@ -17,7 +17,7 @@ export const API_ERROR_CODES: ErrorCode[] = [
   'bad_request', 'unauthorized', 'not_found', 'not_member', 'already_member', 'frozen', 'duplicate',
   'min_points', 'step_points', 'insufficient_points', 'cap_exceeded', 'code_wrong', 'code_expired',
   'code_locked', 'too_many_codes', 'not_allowed', 'family_full',
-  'hold_exists', 'hold_expired', 'hold_not_found', 'device_mismatch',
+  'hold_exists', 'hold_expired', 'hold_not_found', 'hold_used', 'hold_cancelled', 'device_mismatch',
 ];
 
 export class RewardsError extends Error {
@@ -41,7 +41,8 @@ export interface Member {
   tier: TierName;
   tier_spend_sar: number;
   next_tier: { name: TierName; remaining_sar: number } | null;
-  points: { usable: number; pending: number; value_sar: number };
+  /** `held` / `available` (API v1.3): points reserved by an open wallet QR, and usable minus held. */
+  points: { usable: number; pending: number; value_sar: number; held?: number; available?: number };
   next_expiry: { points: number; date: string } | null;
   household: { is_owner: boolean; size: number; owner_mobile_masked: string };
   /** points per riyal for the current tier */
